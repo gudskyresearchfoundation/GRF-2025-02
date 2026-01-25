@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-Driven Precision Agriculture - Gudsky Research Foundation">
+    <meta name="keywords" content="precision agriculture, AI, machine learning, crop disease detection">
+    <meta name="author" content="Gudsky Research Foundation">
+    
+    <title>AI-Driven Precision Agriculture | Gudsky Research Foundation</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/static/image/Gudsky_hostinger_ai_logo.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="/static/image/Gudsky_hostinger_ai_logo.png" alt="Gudsky Research Foundation" class="logo">
+                <div class="brand-text">
+                    <h1>Gudsky Research Foundation</h1>
+                    <p class="project-id">Project ID: GRF-2025-02</p>
+                </div>
+            </div>
+            <div class="nav-links">
+                <a href="#home" class="nav-link active">Home</a>
+                <a href="#analysis" class="nav-link">Analysis</a>
+                <a href="#reports" class="nav-link">Reports</a>
+                <a href="#about" class="nav-link">About</a>
+                <a href="http://localhost:8000/docs" target="_blank" class="nav-link api-link">
+                    <i class="fas fa-code"></i> API Docs
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">AI-Driven Precision Agriculture</h1>
+                <h2 class="hero-subtitle">An Integrated System Architecture for Sustainable and Smart Farming</h2>
+                <p class="hero-description">
+                    Empowering farmers with cutting-edge AI technology for crop health monitoring, 
+                    yield prediction, and smart irrigation management.
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="scrollToSection('analysis')">
+                        <i class="fas fa-rocket"></i> Start Analysis
+                    </button>
+                    <button class="btn btn-secondary" onclick="scrollToSection('about')">
+                        <i class="fas fa-info-circle"></i> Learn More
+                    </button>
+                </div>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-card">
+                    <i class="fas fa-brain stat-icon"></i>
+                    <h3>6 AI Models</h3>
+                    <p>Integrated System</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-leaf stat-icon"></i>
+                    <h3>95%+</h3>
+                    <p>Disease Detection Accuracy</p>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-chart-line stat-icon"></i>
+                    <h3>Real-time</h3>
+                    <p>Weather & Analytics</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analysis Section -->
+    <section id="analysis" class="analysis-section">
+        <div class="container">
+            <h2 class="section-title">Agricultural Analysis Dashboard</h2>
+            <p class="section-subtitle">Upload images, analyze soil, predict yields, and more</p>
+
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="disease">
+                    <i class="fas fa-microscope"></i> Disease Detection
+                </button>
+                <button class="tab-btn" data-tab="soil">
+                    <i class="fas fa-seedling"></i> Soil Analysis
+                </button>
+                <button class="tab-btn" data-tab="weather">
+                    <i class="fas fa-cloud-sun"></i> Weather Forecast
+                </button>
+                <button class="tab-btn" data-tab="yield">
+                    <i class="fas fa-chart-bar"></i> Yield Prediction
+                </button>
+                <button class="tab-btn" data-tab="irrigation">
+                    <i class="fas fa-tint"></i> Irrigation
+                </button>
+                <button class="tab-btn" data-tab="pest">
+                    <i class="fas fa-bug"></i> Pest Risk
+                </button>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="tab-content-container">
+                <!-- Disease Detection Tab -->
+                <div class="tab-content active" id="disease-tab">
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-microscope"></i> Crop Disease Detection</h3>
+                        <p>Upload a plant leaf image to detect diseases using our ResNet50 AI model</p>
+                        
+                        <div class="upload-section">
+                            <div class="upload-area" id="diseaseUploadArea">
+                                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                                <p>Drag & drop an image here or click to browse</p>
+                                <input type="file" id="diseaseImageInput" accept="image/*" hidden>
+                                <button class="btn btn-upload" onclick="document.getElementById('diseaseImageInput').click()">
+                                    <i class="fas fa-upload"></i> Choose Image
+                                </button>
+                            </div>
+                            <div id="diseasePreview" class="image-preview" style="display: none;">
+                                <img id="diseasePreviewImg" src="" alt="Preview">
+                                <button class="btn btn-remove" onclick="removeDiseaseImage()">
+                                    <i class="fas fa-times"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-analyze" id="analyzeDiseaseBtn" disabled>
+                            <i class="fas fa-microscope"></i> Analyze Disease
+                        </button>
+                        
+                        <div id="diseaseResults" class="results-container" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Soil Analysis Tab -->
+                <div class="tab-content" id="soil-tab">
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-seedling"></i> Soil Health Analysis</h3>
+                        <p>Enter soil parameters to get NPK recommendations and health assessment</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="soilPH">pH Level (4-9)</label>
+                                <input type="number" id="soilPH" step="0.1" min="4" max="9" placeholder="6.5">
+                            </div>
+                            <div class="form-group">
+                                <label for="soilNitrogen">Nitrogen (kg/ha)</label>
+                                <input type="number" id="soilNitrogen" step="1" min="0" placeholder="70">
+                            </div>
+                            <div class="form-group">
+                                <label for="soilPhosphorus">Phosphorus (kg/ha)</label>
+                                <input type="number" id="soilPhosphorus" step="1" min="0" placeholder="25">
+                            </div>
+                            <div class="form-group">
+                                <label for="soilPotassium">Potassium (kg/ha)</label>
+                                <input type="number" id="soilPotassium" step="1" min="0" placeholder="150">
+                            </div>
+                            <div class="form-group">
+                                <label for="soilOrganic">Organic Carbon (%) <span class="optional">Optional</span></label>
+                                <input type="number" id="soilOrganic" step="0.1" min="0" placeholder="1.0">
+                            </div>
+                            <div class="form-group">
+                                <label for="soilMoisture">Soil Moisture (0-1) <span class="optional">Optional</span></label>
+                                <input type="number" id="soilMoisture" step="0.01" min="0" max="1" placeholder="0.5">
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-analyze" onclick="analyzeSoil()">
+                            <i class="fas fa-flask"></i> Analyze Soil
+                        </button>
+                        
+                        <div id="soilResults" class="results-container" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Weather Tab -->
+                <div class="tab-content" id="weather-tab">
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-cloud-sun"></i> Weather Forecast & Agricultural Alerts</h3>
+                        <p>Get weather data and agricultural recommendations for your location</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="weatherLat">Latitude</label>
+                                <input type="number" id="weatherLat" step="0.0001" placeholder="28.6139" value="28.6139">
+                            </div>
+                            <div class="form-group">
+                                <label for="weatherLon">Longitude</label>
+                                <input type="number" id="weatherLon" step="0.0001" placeholder="77.2090" value="77.2090">
+                            </div>
+                            <div class="form-group">
+                                <label for="weatherDays">Forecast Days (1-16)</label>
+                                <input type="number" id="weatherDays" min="1" max="16" value="7">
+                            </div>
+                            <div class="form-group">
+                                <label for="locationSearch">Or Search Location</label>
+                                <input type="text" id="locationSearch" placeholder="Delhi, India">
+                                <button class="btn btn-secondary btn-sm" onclick="searchLocation()">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-analyze" onclick="getWeather()">
+                            <i class="fas fa-cloud"></i> Get Weather Forecast
+                        </button>
+                        
+                        <div id="weatherResults" class="results-container" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Yield Prediction Tab -->
+                <div class="tab-content" id="yield-tab">
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-chart-bar"></i> Crop Yield Prediction</h3>
+                        <p>Predict future yields based on historical data and trends</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group full-width">
+                                <label for="yieldCrop">Crop Type</label>
+                                <select id="yieldCrop">
+                                    <option value="wheat">Wheat</option>
+                                    <option value="rice">Rice</option>
+                                    <option value="corn">Corn</option>
+                                    <option value="cotton">Cotton</option>
+                                    <option value="soybean">Soybean</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="forecastDays">Forecast Period (days)</label>
+                                <input type="number" id="forecastDays" value="120" min="30" max="365">
+                            </div>
+                        </div>
+                        
+                        <div class="historical-data-section">
+                            <h4>Historical Yield Data <span class="optional">(Optional - leave empty for baseline prediction)</span></h4>
+                            <div id="historicalDataInputs">
+                                <div class="historical-entry">
+                                    <input type="date" placeholder="Date">
+                                    <input type="number" placeholder="Yield (kg/ha)" step="1">
+                                    <button class="btn btn-remove-entry" onclick="removeHistoricalEntry(this)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button class="btn btn-secondary btn-sm" onclick="addHistoricalEntry()">
+                                <i class="fas fa-plus"></i> Add More Data
+                            </button>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-analyze" onclick="predictYield()">
+                            <i class="fas fa-chart-line"></i> Predict Yield
+                        </button>
+                        
+                        <div id="yieldResults" class="results-container" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Irrigation Tab -->
+                <div class="tab-content" id="irrigation-tab">
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-tint"></i> Irrigation Optimization</h3>
+                        <p>Calculate optimal irrigation requirements for your crops</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="irrigCrop">Crop Type</label>
+                                <select id="irrigCrop">
+                                    <option value="rice">Rice</option>
+                                    <option value="wheat">Wheat</option>
+                                    <option value="corn">Corn</option>
+                                    <option value="cotton">Cotton</option>
+                                    <option value="tomato">Tomato</option>
+                                    <option value="potato">Potato</option>
+                                    <option value="sugarcane">Sugarcane</option>
+                                    <option value="soybean">Soybean</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="irrigMoisture">Soil Moisture (0-1)</label>
+                                <input type="number" id="irrigMoisture" step="0.01" min="0" max="1" placeholder="0.4">
+                            </div>
+                            <div class="form-group">
+                                <label for="irrigStage">Growth Stage</label>
+                                <select id="irrigStage">
+                                    <option value="germination">Germination</option>
+                                    <option value="vegetative">Vegetative</option>
+                                    <option value="flowering">Flowering</option>
+                                    <option value="fruiting">Fruiting</option>
+                                    <option value="maturity">Maturity</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="irrigRainfall">Expected Rainfall (mm/7 days)</label>
+                                <input type="number" id="irrigRainfall" step="1" min="0" placeholder="10">
+                            </div>
+                            <div class="form-group">
+                                <label for="irrigTemp">Temperature (°C)</label>
+                                <input type="number" id="irrigTemp" step="0.1" placeholder="25">
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-analyze" onclick="calculateIrrigation()">
+                            <i class="fas fa-calculator"></i> Calculate Irrigation
+                        </button>
+                        
+                        <div id="irrigationResults" class="results-container" style="display: none;"></div>
+                    </div>
+                </div>
+
+                <!-- Pest Risk Tab -->
+                <div class="tab-content" id="pest-tab">
+                    <div class="analysis-card">
+                        <h3><i class="fas fa-bug"></i> Pest Risk Assessment</h3>
+                        <p>Evaluate pest risk based on environmental conditions</p>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="pestCrop">Crop Type</label>
+                                <select id="pestCrop">
+                                    <option value="rice">Rice</option>
+                                    <option value="wheat">Wheat</option>
+                                    <option value="corn">Corn</option>
+                                    <option value="cotton">Cotton</option>
+                                    <option value="tomato">Tomato</option>
+                                    <option value="potato">Potato</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="pestTemp">Temperature (°C)</label>
+                                <input type="number" id="pestTemp" step="0.1" placeholder="28">
+                            </div>
+                            <div class="form-group">
+                                <label for="pestHumidity">Humidity (%)</label>
+                                <input type="number" id="pestHumidity" step="1" min="0" max="100" placeholder="75">
+                            </div>
+                            <div class="form-group">
+                                <label for="pestRainfall">Rainfall Last 7 Days (mm)</label>
+                                <input type="number" id="pestRainfall" step="1" min="0" placeholder="30">
+                            </div>
+                            <div class="form-group full-width">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="pestPreviousInfestation">
+                                    Previous pest infestation detected
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary btn-analyze" onclick="assessPestRisk()">
+                            <i class="fas fa-shield-alt"></i> Assess Risk
+                        </button>
+                        
+                        <div id="pestResults" class="results-container" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reports Section -->
+    <section id="reports" class="reports-section">
+        <div class="container">
+            <h2 class="section-title">Comprehensive Reports</h2>
+            <p class="section-subtitle">Generate AI-powered agricultural advisory reports</p>
+            
+            <div class="report-card">
+                <div class="report-info">
+                    <h3><i class="fas fa-file-alt"></i> AI-Generated Report</h3>
+                    <p>Combine all analyses into a comprehensive report with actionable recommendations</p>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Executive Summary</li>
+                        <li><i class="fas fa-check"></i> Detailed Analysis from all 6 models</li>
+                        <li><i class="fas fa-check"></i> Prioritized Action Items</li>
+                        <li><i class="fas fa-check"></i> Risk Alerts & Recommendations</li>
+                    </ul>
+                </div>
+                <button class="btn btn-primary" onclick="generateReport()" id="generateReportBtn">
+                    <i class="fas fa-file-pdf"></i> Generate Report
+                </button>
+            </div>
+            
+            <div id="reportOutput" class="report-output" style="display: none;"></div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <!-- About Gudsky Research Foundation -->
+            <div class="about-organization">
+                <h2 class="section-title">About Gudsky Research Foundation</h2>
+                <p class="section-subtitle">A non-profit organization committed to bridging the gap between academia and industry through research-driven learning in emerging technologies.</p>
+                
+                <div class="journey-timeline">
+                    <h3>Our Journey: From Concept to Foundation</h3>
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker">2022</div>
+                            <div class="timeline-content">
+                                <h4>The Beginning</h4>
+                                <p>Started as a college research group, focusing on innovative projects and guiding fellow students towards research-based work.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker">2024</div>
+                            <div class="timeline-content">
+                                <h4>Official Registration</h4>
+                                <p>Officially registered as a Section 8 Non-Profit Organization, solidifying our mission and expanding our operations.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker">Today</div>
+                            <div class="timeline-content">
+                                <h4>A Growing Ecosystem</h4>
+                                <p>A thriving community dedicated to providing hands-on experience in AI, Robotics, and other emerging technologies.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Information -->
+            <div class="project-section">
+                <h2 class="section-title">About This Project</h2>
+                <div class="project-info-card">
+                    <p><strong>Project ID:</strong> GRF-2025-02</p>
+                    <p><strong>Title:</strong> AI-Driven Precision Agriculture: An Integrated System Architecture for Sustainable and Smart Farming</p>
+                    <p><strong>Organization:</strong> Gudsky Research Foundation</p>
+                    <p><strong>Copyright:</strong> © 2025 Gudsky Research Foundation. All rights reserved.</p>
+                </div>
+                
+                <h3>Research Objectives</h3>
+                <p class="objectives-intro">
+                    The major implication of this work is to develop and apply an Artificial Intelligence-based precision agriculture system 
+                    to Indian agricultural practice. Based on AI, IoT, Computer Vision, Machine Learning, Natural Language Processing, and 
+                    Remote Sensing, our goal is to improve resource utilization efficiency, crop disease identification, yield predictions, 
+                    and decision-making processes.
+                </p>
+
+                <h3>Specific Objectives</h3>
+                <div class="objectives-grid">
+                    <div class="objective-card">
+                        <div class="objective-icon">🏗️</div>
+                        <h4>Unified AI-Driven Framework</h4>
+                        <p>Build an integrated architecture combining IoT sensors, remote sensing, AI models, and decision-support systems into a single accessible platform for farmers across diverse Indian agro-climatic zones.</p>
+                    </div>
+                    
+                    <div class="objective-card">
+                        <div class="objective-icon">💧</div>
+                        <h4>Optimize Resource Management</h4>
+                        <p>Design AI-based models for smart irrigation to reduce groundwater depletion and develop algorithms for precision fertilizer and pesticide usage to enhance soil health and minimize environmental hazards.</p>
+                    </div>
+                    
+                    <div class="objective-card">
+                        <div class="objective-icon">🔬</div>
+                        <h4>Crop Disease & Pest Detection</h4>
+                        <p>Use computer vision and deep learning to detect early signs of crop diseases and pest infestations from leaf images, drone feeds, and satellite data, providing timely alerts in local languages.</p>
+                    </div>
+                    
+                    <div class="objective-card">
+                        <div class="objective-icon">📊</div>
+                        <h4>Yield Prediction & Market Forecasting</h4>
+                        <p>Build predictive models using ML and remote sensing to forecast crop yields with high accuracy and integrate market data for insights on demand, supply, and pricing trends.</p>
+                    </div>
+                    
+                    <div class="objective-card">
+                        <div class="objective-icon">🌦️</div>
+                        <h4>Climate-Resilient Solutions</h4>
+                        <p>Develop AI models to forecast weather conditions and provide adaptive strategies for sowing, irrigation, and harvesting to mitigate climate change risks.</p>
+                    </div>
+                    
+                    <div class="objective-card">
+                        <div class="objective-icon">📱</div>
+                        <h4>Farmer-Centric Advisory System</h4>
+                        <p>Leverage NLP and multilingual AI models to deliver personalized recommendations via mobile apps, voice assistants, and SMS in regional languages for inclusive accessibility.</p>
+                    </div>
+                    
+                    <div class="objective-card">
+                        <div class="objective-icon">🧪</div>
+                        <h4>Pilot Testing & Validation</h4>
+                        <p>Implement pilot projects in selected regions (Punjab for wheat, Maharashtra for cotton, Andhra Pradesh for rice) to validate the system under real-world conditions.</p>
+                    </div>
+                </div>
+
+                <h3>Key Features</h3>
+                <div class="features-grid">
+                    <div class="feature-item">
+                        <i class="fas fa-microscope"></i>
+                        <h4>Disease Detection</h4>
+                        <p>ResNet50-powered crop disease identification with 95%+ accuracy</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-cloud"></i>
+                        <h4>Weather Intelligence</h4>
+                        <p>Real-time weather forecasts and agricultural alerts</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-seedling"></i>
+                        <h4>Soil Analysis</h4>
+                        <p>NPK recommendations and soil health assessment</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Yield Prediction</h4>
+                        <p>Prophet-based time-series forecasting for crop yields</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-tint"></i>
+                        <h4>Smart Irrigation</h4>
+                        <p>Optimized water management based on FAO guidelines</p>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fas fa-bug"></i>
+                        <h4>Pest Risk Assessment</h4>
+                        <p>Environmental analysis for pest prevention</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Logo and Stats -->
+            <div class="about-footer">
+                <div class="about-logo-section">
+                    <img src="/static/image/Gudsky_hostinger_ai_logo.png" alt="Gudsky Research Foundation">
+                    <div class="about-stats">
+                        <div class="stat-box">
+                            <h4>6</h4>
+                            <p>AI Models</p>
+                        </div>
+                        <div class="stat-box">
+                            <h4>95%+</h4>
+                            <p>Accuracy</p>
+                        </div>
+                        <div class="stat-box">
+                            <h4>Real-time</h4>
+                            <p>Analytics</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <img src="/static/image/Gudsky_hostinger_ai_logo.png" alt="Gudsky Research Foundation" class="footer-logo">
+                    <p>Advancing agriculture through AI innovation</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Project Information</h4>
+                    <p>Project ID: GRF-2025-02</p>
+                    <p>Gudsky Research Foundation</p>
+                    <p>© 2025 All Rights Reserved</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Quick Links</h4>
+                    <a href="http://localhost:8000/docs" target="_blank">API Documentation</a>
+                    <a href="http://localhost:8000/redoc" target="_blank">API Reference</a>
+                    <a href="#analysis">Start Analysis</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Technologies</h4>
+                    <p>ResNet50 • Prophet • LIME • SHAP</p>
+                    <p>FastAPI • PyTorch • Transformers</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>AI-Driven Precision Agriculture System | Developed with ❤️ for sustainable farming</p>
+                <p class="copyright-notice">All content, concepts, system designs, methodologies, and models described are the intellectual property of Gudsky Research Foundation.</p>
+                <p class="copyright-notice">© 2025 Gudsky Research Foundation. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
