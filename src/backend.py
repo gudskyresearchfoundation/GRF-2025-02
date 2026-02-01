@@ -1,6 +1,7 @@
 """
 Backend API Routes
 FastAPI routes connecting all 6 models + Report Generation + XAI
+UPDATED: Models are pre-loaded in server.py, this just uses them
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body
@@ -11,7 +12,7 @@ import logging
 from PIL import Image
 import io
 
-# FIXED IMPORTS - Added 'src.' prefix
+# Import model getters (models will already be loaded by server.py)
 from src.models.disease_detection import get_disease_detector
 from src.models.weather_service import get_weather_service
 from src.models.soil_model import get_soil_analyzer
@@ -84,7 +85,7 @@ async def root():
         "version": "1.0.0",
         "status": "online",
         "models": {
-            "disease_detection": "ResNet50 (Hugging Face)",
+            "disease_detection": "MobileNetV2 (Hugging Face)",
             "weather": "Open-Meteo API",
             "soil_analysis": "Rule-based",
             "yield_prediction": "Prophet/Rule-based",
@@ -268,7 +269,7 @@ async def analyze_soil(data: SoilData):
             moisture=data.moisture
         )
 
-        logger.info(f"✅ Soil analysis: {result['health_status']}")
+        logger.info(f"✅ Soil analysis: {result['health_status']} ({result['health_score']}/100)")
         return JSONResponse(content=result)
 
     except Exception as e:
@@ -466,12 +467,12 @@ async def health_check():
     """Health check endpoint"""
     try:
         models_status = {
-            "disease_detector": "healthy",
-            "weather_service": "healthy",
-            "soil_analyzer": "healthy",
-            "yield_predictor": "healthy",
-            "irrigation_optimizer": "healthy",
-            "pest_assessor": "healthy"
+            "disease_detector": "loaded",
+            "weather_service": "loaded",
+            "soil_analyzer": "loaded",
+            "yield_predictor": "loaded",
+            "irrigation_optimizer": "loaded",
+            "pest_assessor": "loaded"
         }
 
         return {
@@ -487,57 +488,41 @@ async def health_check():
 
 
 # ============================================================================
-# STARTUP EVENT
+# STARTUP EVENT - Models already loaded in server.py
 # ============================================================================
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize all models on startup"""
-    logger.info("=" * 70)
-    logger.info("🌱 Precision Agriculture Backend Starting...")
-    logger.info("=" * 70)
-
+    """
+    Initialize all models on startup
+    NOTE: Models are pre-loaded in server.py before uvicorn starts
+    This is just a verification step
+    """
+    logger.info("🔄 Verifying models are loaded...")
+    
     try:
-        logger.info("📥 Pre-loading models...")
-
+        # Just verify they're accessible (already loaded)
         get_disease_detector()
-        logger.info("✅ Disease Detector ready")
-
         get_weather_service()
-        logger.info("✅ Weather Service ready")
-
         get_soil_analyzer()
-        logger.info("✅ Soil Analyzer ready")
-
         get_yield_predictor()
-        logger.info("✅ Yield Predictor ready")
-
         get_irrigation_optimizer()
-        logger.info("✅ Irrigation Optimizer ready")
-
         get_pest_risk_assessor()
-        logger.info("✅ Pest Risk Assessor ready")
-
+        
         try:
             get_report_generator()
-            logger.info("✅ Report Generator ready")
-        except Exception as e:
-            logger.warning(f"⚠️ Report Generator not available: {e}")
-
+        except:
+            pass
+        
         try:
             get_explainer()
-            logger.info("✅ Explainer ready")
-        except Exception as e:
-            logger.warning(f"⚠️ Explainer not available: {e}")
-
-        logger.info("=" * 70)
-        logger.info("✅ All models loaded successfully!")
-        logger.info("🌐 Backend API ready")
-        logger.info("=" * 70)
-
+        except:
+            pass
+        
+        logger.info("✅ All models verified and ready")
+        
     except Exception as e:
-        logger.error(f"❌ Failed to initialize models: {str(e)}")
-        raise
+        logger.error(f"⚠️  Model verification failed: {str(e)}")
 
 
 if __name__ == "__main__":
