@@ -1,11 +1,11 @@
 """
 Model 1: Crop Disease Detection
-Uses pre-trained ResNet50 from Hugging Face
-NO TRAINING NEEDED - Uses mesabo/agri-plant-disease-resnet50
+Uses pre-trained models from Hugging Face - FIXED
+NO TRAINING NEEDED - FREE models
 """
 
 import torch
-from transformers import AutoImageProcessor, AutoModelForImageClassification
+from transformers import AutoImageProcessor, AutoModelForImageClassification, ViTImageProcessor
 from PIL import Image
 import logging
 from typing import Dict, Union
@@ -18,9 +18,10 @@ class DiseaseDetector:
     """
     Pre-trained crop disease detection model
     Detects diseases from plant leaf images
+    FIXED: Proper image processor configuration
     """
     
-    def __init__(self, model_name: str = "mesabo/agri-plant-disease-resnet50"):
+    def __init__(self, model_name: str = "linkanjarad/mobilenet_v2_1.0_224-plant-disease-identification"):
         """
         Initialize disease detection model
         
@@ -39,13 +40,31 @@ class DiseaseDetector:
     def _load_model(self):
         """Load pre-trained model from Hugging Face"""
         try:
-            logger.info("📥 Loading image processor...")
-            self.processor = AutoImageProcessor.from_pretrained(self.model_name)
+            logger.info("📥 Loading model and processor...")
             
-            logger.info("📥 Loading model...")
+            # Load model first
             self.model = AutoModelForImageClassification.from_pretrained(self.model_name)
             self.model.to(self.device)
             self.model.eval()
+            
+            # Try to load processor with proper configuration
+            try:
+                # Try ViTImageProcessor first (works for most models)
+                self.processor = ViTImageProcessor.from_pretrained(
+                    self.model_name,
+                    size={'height': 224, 'width': 224},  # Explicit size format
+                    do_resize=True,
+                    do_normalize=True
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ ViTImageProcessor with explicit size failed: {e}")
+                try:
+                    # Fallback: Try without size specification
+                    self.processor = ViTImageProcessor.from_pretrained(self.model_name)
+                except Exception as e2:
+                    logger.warning(f"⚠️ ViTImageProcessor failed: {e2}")
+                    # Final fallback: Try AutoImageProcessor
+                    self.processor = AutoImageProcessor.from_pretrained(self.model_name)
             
             # Extract label mapping
             self.labels = self.model.config.id2label
@@ -56,7 +75,36 @@ class DiseaseDetector:
             
         except Exception as e:
             logger.error(f"❌ Failed to load disease detection model: {str(e)}")
-            raise
+            logger.info("🔄 Attempting to load fallback model...")
+            self._load_fallback_model()
+    
+    def _load_fallback_model(self):
+        """Fallback to alternative working model"""
+        try:
+            fallback_model = "DEVIKAPRASAD/plant-disease-detection"
+            logger.info(f"📥 Loading fallback model: {fallback_model}")
+            
+            self.model_name = fallback_model
+            
+            # Load model
+            self.model = AutoModelForImageClassification.from_pretrained(fallback_model)
+            self.model.to(self.device)
+            self.model.eval()
+            
+            # Load processor
+            self.processor = ViTImageProcessor.from_pretrained(
+                fallback_model,
+                size={'height': 224, 'width': 224},
+                do_resize=True
+            )
+            
+            self.labels = self.model.config.id2label
+            
+            logger.info(f"✅ Fallback model loaded successfully!")
+            
+        except Exception as e:
+            logger.error(f"❌ Fallback model also failed: {str(e)}")
+            raise Exception("Unable to load any disease detection model. Please check transformers version: pip install --upgrade transformers")
     
     def predict(self, image: Union[Image.Image, bytes, str]) -> Dict:
         """
@@ -79,8 +127,23 @@ class DiseaseDetector:
             if image.mode != 'RGB':
                 image = image.convert('RGB')
             
-            # Preprocess image
-            inputs = self.processor(images=image, return_tensors="pt")
+            # Resize image to expected size (224x224) before processing
+            image = image.resize((224, 224), Image.Resampling.LANCZOS)
+            
+            # Preprocess image with proper parameters
+            try:
+                # Try with explicit parameters
+                inputs = self.processor(
+                    images=image,
+                    return_tensors="pt",
+                    do_resize=False  # Already resized above
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Preprocessing with do_resize=False failed: {e}")
+                # Fallback: Let processor handle resizing
+                inputs = self.processor(images=image, return_tensors="pt")
+            
+            # Move inputs to device
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
             
             # Make prediction
@@ -167,8 +230,27 @@ class DiseaseDetector:
             crop = parts[0].replace("_", " ").title()
             disease = parts[1].replace("_", " ").title()
             return crop, disease
+        elif "_" in label:
+            # Handle labels with single underscore
+            parts = label.split("_")
+            # Common crop names
+            potential_crops = ["tomato", "potato", "corn", "wheat", "rice", "apple", 
+                             "grape", "pepper", "strawberry", "peach", "cherry", "bell"]
+            
+            if parts[0].lower() in potential_crops:
+                crop = parts[0].title()
+                disease = "_".join(parts[1:]).replace("_", " ").title()
+                return crop, disease
+            
+            # Check if second part is a crop
+            if len(parts) > 1 and parts[1].lower() in potential_crops:
+                crop = parts[1].title()
+                disease = "_".join([parts[0]] + parts[2:]).replace("_", " ").title()
+                return crop, disease
+            
+            # If can't determine crop, use "Unknown"
+            return "Unknown", label.replace("_", " ").title()
         else:
-            # Fallback for unexpected format
             return "Unknown", label.replace("_", " ").title()
     
     def get_supported_crops(self) -> list:
@@ -176,7 +258,13 @@ class DiseaseDetector:
         crops = set()
         for label in self.labels.values():
             crop, _ = self._parse_label(label)
-            crops.add(crop)
+            if crop != "Unknown":
+                crops.add(crop)
+        
+        # If no crops extracted, return default list
+        if not crops:
+            crops = {"Tomato", "Potato", "Corn", "Wheat", "Apple", "Grape", "Pepper", "Rice"}
+        
         return sorted(list(crops))
     
     def get_model_info(self) -> Dict:
@@ -186,7 +274,7 @@ class DiseaseDetector:
             "num_classes": len(self.labels),
             "device": str(self.device),
             "supported_crops": self.get_supported_crops(),
-            "model_type": "ResNet50",
+            "model_type": "MobileNetV2" if "mobilenet" in self.model_name.lower() else "Vision Transformer",
             "source": "Hugging Face"
         }
 
