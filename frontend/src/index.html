@@ -37,8 +37,8 @@
                 <a href="#analysis" class="nav-link">Analysis</a>
                 <a href="#reports" class="nav-link">Reports</a>
                 <a href="#about" class="nav-link">About</a>
-                <a href="http://localhost:8000/docs" target="_blank" class="nav-link api-link">
-                    <i class="fas fa-code"></i> API Docs
+                <a href="#chat" class="nav-link">
+                    <i class="fas fa-om"></i> 🙏 Balarama Ji
                 </a>
             </div>
         </div>
@@ -551,6 +551,142 @@
             </div>
         </div>
     </section>
+
+
+    <!-- ============================================================================
+     AI CHAT ASSISTANT INTEGRATION
+     Add this section before the closing </main> tag in your index.html
+     ============================================================================ -->
+
+<!-- Chat Assistant Section -->
+<section id="chat" class="chat-section">
+    <div class="container">
+        <h2 class="section-title">🤖 AI Farm Assistant</h2>
+        <p class="section-subtitle">Chat with our AI assistant about your analysis results and get personalized farming advice</p>
+        
+        <div class="chat-container">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-avatar">🌱</div>
+                    <div>
+                        <h3>AgriBot</h3>
+                        <p class="chat-status">
+                            <span class="status-indicator"></span> 
+                            Online - Ready to help
+                        </p>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button onclick="clearChatHistory()" class="btn-icon" title="Clear chat">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <button onclick="toggleChat()" class="btn-icon" title="Minimize">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Analysis Summary Panel -->
+            <div class="analysis-summary-panel" id="analysisSummaryPanel">
+                <h4><i class="fas fa-chart-bar"></i> Your Analysis Summary</h4>
+                <div id="analysisSummaryContent">
+                    <p class="no-data">No analyses completed yet. Complete an analysis to get personalized recommendations!</p>
+                </div>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages">
+                <div class="message assistant-message">
+                    <div class="message-avatar">🌱</div>
+                    <div class="message-content">
+                        <p>Hello! I'm your AI Farm Assistant. I can help you with:</p>
+                        <ul>
+                            <li>Understanding your analysis results</li>
+                            <li>Personalized farming recommendations</li>
+                            <li>Crop disease management advice</li>
+                            <li>Irrigation and fertilizer planning</li>
+                            <li>Weather-based farming strategies</li>
+                            <li>Pest prevention techniques</li>
+                        </ul>
+                        <p>Ask me anything about your farm data or general agriculture questions!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="quick-actions" id="quickActions">
+                <button onclick="askQuickQuestion('Summarize my analysis results')" class="quick-action-btn">
+                    📊 Summarize my results
+                </button>
+                <button onclick="askQuickQuestion('What should I do next based on my analysis?')" class="quick-action-btn">
+                    🎯 What should I do next?
+                </button>
+                <button onclick="askQuickQuestion('Give me recommendations to improve my crop yield')" class="quick-action-btn">
+                    📈 Improve yield
+                </button>
+                <button onclick="askQuickQuestion('How can I optimize water usage?')" class="quick-action-btn">
+                    💧 Optimize water
+                </button>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-container">
+                <textarea 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Ask me anything about your farm data or agriculture..."
+                    rows="3"
+                    onkeydown="handleChatKeyPress(event)"
+                ></textarea>
+                <button onclick="sendChatMessage()" class="chat-send-btn" id="chatSendBtn">
+                    <i class="fas fa-paper-plane"></i> Send
+                </button>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <div class="message assistant-message">
+                    <div class="message-avatar">🌱</div>
+                    <div class="message-content">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Feature Info -->
+        <div class="chat-features">
+            <div class="feature-badge">
+                <i class="fas fa-brain"></i>
+                <span>Context-Aware</span>
+            </div>
+            <div class="feature-badge">
+                <i class="fas fa-database"></i>
+                <span>Tracks Your Data</span>
+            </div>
+            <div class="feature-badge">
+                <i class="fas fa-language"></i>
+                <span>Natural Language</span>
+            </div>
+            <div class="feature-badge">
+                <i class="fas fa-lightbulb"></i>
+                <span>Smart Recommendations</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Floating Chat Button (for mobile/minimized state) -->
+<button class="floating-chat-btn" onclick="toggleChat()" id="floatingChatBtn" style="display: none;">
+    <i class="fas fa-comments"></i>
+    <span class="notification-badge" id="chatNotificationBadge" style="display: none;">1</span>
+</button>
+
 
     <!-- Footer -->
     <footer class="footer">

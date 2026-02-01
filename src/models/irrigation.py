@@ -63,9 +63,9 @@ class IrrigationOptimizer:
             adjusted_need = base_need * stage_factor
             
             # Adjust for temperature
-            if temperature > 30:
+            if temperature_celsius > 30:
                 adjusted_need *= 1.2
-            elif temperature < 20:
+            elif temperature_celsius < 20:
                 adjusted_need *= 0.9
             
             # Adjust for soil moisture
