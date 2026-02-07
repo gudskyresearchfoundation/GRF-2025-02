@@ -1,102 +1,35 @@
-# ============================================================================
-# PRECISION AGRICULTURE SYSTEM - COMPLETE REQUIREMENTS
-# Project: GRF-2025-02
-# Company: Gudsky Research Foundation
-# ============================================================================
+# GRF-2025-02 Precision Agriculture System
+# Python Dependencies
 
-# ============================================================================
-# CRITICAL - Install these first
-# ============================================================================
+# Web Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
 
-# Core Web Framework
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-python-multipart>=0.0.6  # REQUIRED for file uploads
-pydantic>=2.0.0
-
-# ============================================================================
-# MACHINE LEARNING & DEEP LEARNING
-# ============================================================================
-
-# PyTorch - Required for Disease Detection (ResNet50)
+# ML & AI
 torch>=2.0.0
-torchvision>=0.15.0
-
-# Transformers - Required for Hugging Face models
-transformers>=4.30.0
-
-# Image Processing
-pillow>=9.0.0
-scikit-image>=0.21.0
-
-# ============================================================================
-# TIME SERIES & FORECASTING
-# ============================================================================
-
-# Prophet - Required for Yield Prediction
-prophet>=1.1.0
-
-# Data Processing
+transformers>=4.35.0
+prophet>=1.1.5
 pandas>=2.0.0
 numpy>=1.24.0
+anthropic>=0.34.0
 
-# ============================================================================
-# VISUALIZATION & PLOTTING
-# ============================================================================
+# Image Processing
+Pillow>=10.0.0
 
-# Plotly - For interactive charts in frontend
-plotly>=5.17.0
-kaleido>=0.2.1  # For static image export
-
-# Matplotlib - Alternative plotting
-matplotlib>=3.7.0
-
-# ============================================================================
-# EXPLAINABILITY (XAI)
-# ============================================================================
-
-# LIME - For image explanations
-lime>=0.2.0
-
-# SHAP - For feature importance
-shap>=0.41.0
-
-# Supporting libraries
-scikit-learn>=1.3.0
-
-# ============================================================================
-# API & NETWORKING
-# ============================================================================
-
-# HTTP Requests - For Weather API
+# HTTP & API
 requests>=2.31.0
-
-# Environment Variables
-python-dotenv>=1.0.0
-
-# ============================================================================
-# OPTIONAL BUT RECOMMENDED
-# ============================================================================
-
-# Security & Performance
-slowapi>=0.1.9  # Rate limiting
-python-jose[cryptography]>=3.3.0  # JWT authentication
-passlib[bcrypt]>=1.7.4  # Password hashing
-
-# PDF Generation for Reports
-reportlab>=4.0.0
-fpdf2>=2.7.0
-
-# Excel Export
-openpyxl>=3.1.0
-
-# Monitoring
-prometheus-client>=0.19.0
-
-# Testing
-pytest>=7.4.0
 httpx>=0.25.0
-pytest-asyncio>=0.21.0
+
+# Explainability
+lime>=0.2.0.1
+shap>=0.43.0
+
+# Reporting
+reportlab>=4.0.0
+
+# Utilities
+python-dateutil>=2.8.2
 
 # ============================================================================
 # INSTALLATION NOTES
