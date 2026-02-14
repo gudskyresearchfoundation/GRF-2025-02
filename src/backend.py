@@ -1,13 +1,16 @@
 """
 Backend API Routes
-FastAPI routes connecting all 6 models + Report Generation + XAI
+FastAPI routes connecting all 7 models + Report Generation + XAI + Balaramaji Chat
+UPDATED: Added Balaramaji Divine Assistant with Qwen 2.5 via Ollama
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+from datetime import datetime
 import logging
+import os
 from PIL import Image
 import io
 
@@ -18,6 +21,7 @@ from src.models.soil_model import get_soil_analyzer
 from src.models.yield_prediction import get_yield_predictor
 from src.models.irrigation import get_irrigation_optimizer
 from src.models.pest_risk_assessor import get_pest_risk_assessor
+from src.models.balaramaji import get_balaramaji_assistant  # ✅ NEW
 
 # Import report generation and explainability
 from src.report_generation import get_report_generator
@@ -28,8 +32,8 @@ logger = logging.getLogger(__name__)
 # Create FastAPI app
 app = FastAPI(
     title="Precision Agriculture Backend API",
-    description="6 ML Models + AI Report Generation + Explainability",
-    version="1.0.0"
+    description="7 AI Models + Divine Chat Assistant + Report Generation + Explainability",
+    version="2.0.0"  # ✅ UPDATED
 )
 
 
@@ -72,6 +76,13 @@ class PestData(BaseModel):
     previous_infestation: bool = False
 
 
+class ChatMessage(BaseModel):
+    """Chat message input for Balaramaji"""
+    message: str
+    analysis_context: Optional[Dict] = None
+    chat_history: Optional[List[Dict]] = None
+
+
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================
@@ -81,7 +92,7 @@ async def root():
     """API root - service information"""
     return {
         "service": "Precision Agriculture API",
-        "version": "1.0.0",
+        "version": "2.0.0",  # ✅ UPDATED
         "status": "online",
         "models": {
             "disease_detection": "MobileNetV2 (Hugging Face)",
@@ -89,17 +100,19 @@ async def root():
             "soil_analysis": "Rule-based",
             "yield_prediction": "Prophet/Rule-based",
             "irrigation": "Rule-based (FAO guidelines)",
-            "pest_risk": "Rule-based"
+            "pest_risk": "Rule-based",
+            "balaramaji_chat": "Qwen 2.5 14B/32B (Ollama)"  # ✅ NEW
         },
         "features": [
-            "Disease Detection",
+            "Disease Detection (AI)",
             "Weather Forecasting",
             "Soil Health Analysis",
             "Yield Prediction",
             "Irrigation Scheduling",
             "Pest Risk Assessment",
             "AI Report Generation",
-            "Model Explainability (XAI)"
+            "Model Explainability (XAI)",
+            "Divine Chat Assistant - Qwen 2.5 (Balaramaji)"  # ✅ NEW
         ],
         "endpoints": {
             "disease": "/predict/disease",
@@ -109,7 +122,13 @@ async def root():
             "irrigation": "/irrigation/calculate",
             "pest": "/pest/assess",
             "report": "/report/generate",
-            "explain": "/explain/*"
+            "explain": "/explain/*",
+            "chat": "/chat/balaramaji"  # ✅ NEW
+        },
+        "ai_models": {  # ✅ NEW SECTION
+            "local": ["Qwen 2.5 (Balaramaji - 14B/32B params)"],
+            "cloud": ["MobileNetV2 (Disease Detection)"],
+            "rule_based": ["Soil Analyzer", "Irrigation Optimizer", "Pest Risk Assessor"]
         }
     }
 
@@ -251,22 +270,28 @@ async def search_location(query: str):
 @app.post("/soil/analyze")
 async def analyze_soil(data: SoilData):
     """
-    Analyze soil health and get NPK recommendations
+    Analyze soil health and generate NPK recommendations
 
-    Input: pH, Nitrogen, Phosphorus, Potassium, (optional: organic carbon, moisture)
-    Returns: Health score, status, and fertilizer recommendations
+    Input: pH, Nitrogen, Phosphorus, Potassium, optional: organic carbon, moisture
+    Returns: Health score, recommendations, NPK fertilizer requirements
     """
     try:
         analyzer = get_soil_analyzer()
 
-        result = analyzer.analyze(
-            ph=data.ph,
-            nitrogen=data.nitrogen,
-            phosphorus=data.phosphorus,
-            potassium=data.potassium,
-            organic_carbon=data.organic_carbon,
-            moisture=data.moisture
-        )
+        # Prepare analysis parameters
+        params = {
+            "ph": data.ph,
+            "nitrogen": data.nitrogen,
+            "phosphorus": data.phosphorus,
+            "potassium": data.potassium
+        }
+
+        if data.organic_carbon is not None:
+            params["organic_carbon"] = data.organic_carbon
+        if data.moisture is not None:
+            params["moisture"] = data.moisture
+
+        result = analyzer.analyze(**params)
 
         logger.info(f"✅ Soil analysis: {result['health_status']} ({result['health_score']}/100)")
         return JSONResponse(content=result)
@@ -365,6 +390,260 @@ async def assess_pest_risk(data: PestData):
     except Exception as e:
         logger.error(f"❌ Pest risk assessment error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# MODEL 7: BALARAMAJI CHAT ASSISTANT (Qwen 2.5 via Ollama) ✅ NEW
+# ============================================================================
+
+@app.post("/chat/balaramaji")
+async def chat_with_balaramaji(data: ChatMessage):
+    """
+    Chat with Balaramaji Divine Agricultural Assistant
+    Powered by Qwen 2.5 (14B/32B parameters) via Ollama - 100% Local Inference
+    
+    Features:
+    - Context-aware responses using all farm analysis results
+    - Conversation memory with chat history
+    - Sanskrit-infused divine wisdom + modern science
+    - 100% local inference (no cloud, no API costs)
+    - Privacy-focused (all data stays on your server)
+    
+    Request Body:
+        - message: User's question (required)
+        - analysis_context: All completed farm analyses (optional)
+          Format: {
+              "disease": {"data": {...}},
+              "soil": {"data": {...}},
+              "weather": {"data": {...}},
+              "yield": {"data": {...}},
+              "irrigation": {"data": {...}},
+              "pest": {"data": {...}}
+          }
+        - chat_history: Previous conversation messages (optional)
+          Format: [
+              {"role": "user", "content": "message"},
+              {"role": "assistant", "content": "response"}
+          ]
+    
+    Returns:
+        - response: Balaramaji's integrated divine guidance
+        - model: "qwen2.5:14b" or "qwen2.5:32b" or "fallback"
+        - source: "ollama" or "fallback"
+        - has_context: boolean indicating if analysis context was provided
+        - timestamp: ISO format timestamp
+    
+    Example Request:
+        {
+            "message": "What should I do about my crops?",
+            "analysis_context": {
+                "disease": {"data": {"crop": "Tomato", "disease": "Late Blight"}},
+                "soil": {"data": {"ph": 5.2, "health_score": 65}}
+            },
+            "chat_history": [
+                {"role": "user", "content": "Hello"},
+                {"role": "assistant", "content": "Blessed farmer..."}
+            ]
+        }
+    """
+    try:
+        # Get Ollama host from environment (default: localhost)
+        ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        
+        # Get singleton assistant instance
+        assistant = get_balaramaji_assistant(ollama_host=ollama_host)
+        
+        # Log request details for debugging
+        context_keys = []
+        if data.analysis_context:
+            context_keys = list(data.analysis_context.keys())
+        
+        logger.info(f"💬 Balaramaji chat request")
+        logger.info(f"   Message: {data.message[:50]}...")
+        logger.info(f"   Context: {', '.join(context_keys) if context_keys else 'None'}")
+        logger.info(f"   History: {len(data.chat_history) if data.chat_history else 0} messages")
+        
+        # Generate response with full context
+        response = assistant.generate_response(
+            user_message=data.message,
+            analysis_context=data.analysis_context,
+            chat_history=data.chat_history
+        )
+        
+        # Log response metadata
+        source = response.get('source', 'unknown')
+        model = response.get('model', 'unknown')
+        has_context = response.get('has_context', False)
+        
+        logger.info(f"✅ Balaramaji responded")
+        logger.info(f"   Source: {source}")
+        logger.info(f"   Model: {model}")
+        logger.info(f"   Context used: {has_context}")
+        
+        return JSONResponse(content=response)
+        
+    except Exception as e:
+        logger.error(f"❌ Balaramaji chat error: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Chat service error: {str(e)}"
+        )
+
+
+@app.get("/chat/balaramaji/info")
+async def get_balaramaji_info():
+    """
+    Get information about Balaramaji assistant and Qwen model
+    
+    Returns detailed information about:
+    - Model specifications
+    - Inference engine
+    - Features and capabilities
+    - Privacy and cost information
+    """
+    return {
+        "name": "Balaramaji Divine Assistant",
+        "description": "AI-powered agricultural guidance with divine wisdom",
+        "persona": "Lord Balarama - God of Agriculture in Hindu mythology",
+        "model": {
+            "name": "Qwen 2.5",
+            "variants": ["14B (16GB RAM)", "32B (24GB RAM)"],
+            "current": os.getenv("BALARAMAJI_MODEL", "Auto-detected"),
+            "parameters": "14-32 billion",
+            "size": "8-20 GB",
+            "context_window": "32K tokens",
+            "languages": ["English", "Hindi", "Sanskrit"],
+            "developer": "Alibaba Cloud"
+        },
+        "inference": {
+            "engine": "Ollama",
+            "type": "Local (On-premise)",
+            "host": os.getenv("OLLAMA_HOST", "http://localhost:11434"),
+            "privacy": "100% - All data processed locally",
+            "cost": "Free - No API fees",
+            "offline_capable": True
+        },
+        "features": [
+            "Context-aware responses from all 6 farm analyses",
+            "Sanskrit-infused spiritual wisdom",
+            "Modern scientific agricultural advice",
+            "Natural conversation with memory (up to 8 messages)",
+            "Specialized guidance for crops, soil, irrigation, pests",
+            "Integrated analysis of multiple issues",
+            "Priority-based action plans",
+            "Intelligent fallback support for high availability"
+        ],
+        "capabilities": {
+            "disease_advice": True,
+            "soil_recommendations": True,
+            "irrigation_planning": True,
+            "pest_management": True,
+            "yield_optimization": True,
+            "weather_interpretation": True,
+            "integrated_analysis": True,
+            "conversation_memory": True
+        },
+        "supported_contexts": [
+            "disease_detection",
+            "soil_analysis",
+            "weather_forecast",
+            "yield_prediction",
+            "irrigation_schedule",
+            "pest_risk_assessment"
+        ],
+        "performance": {
+            "with_gpu": "2-5 seconds per response",
+            "cpu_only_14b": "20-30 seconds per response",
+            "cpu_only_32b": "40-60 seconds per response",
+            "recommended_hardware": "GPU with 16GB+ VRAM or 16GB+ RAM for CPU"
+        },
+        "status": "online",
+        "version": "2.0-ollama-qwen"
+    }
+
+
+@app.get("/health/ollama")
+async def check_ollama_health():
+    """
+    Health check for Ollama service
+    Verifies Qwen 2.5 model is loaded and ready
+    
+    Returns:
+    - status: healthy/degraded/unhealthy
+    - ollama connection status
+    - qwen model availability
+    - loaded models list
+    """
+    try:
+        ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        
+        import requests
+        response = requests.get(f"{ollama_host}/api/tags", timeout=5)
+        
+        if response.status_code == 200:
+            models_data = response.json()
+            models = models_data.get("models", [])
+            model_names = [m.get("name") for m in models]
+            
+            # Check for any Qwen 2.5 variant
+            qwen_32b = any("qwen2.5:32b" in name for name in model_names)
+            qwen_14b = any("qwen2.5:14b" in name for name in model_names)
+            qwen_7b = any("qwen2.5:7b" in name for name in model_names)
+            qwen_available = qwen_32b or qwen_14b or qwen_7b
+            
+            # Determine which model is being used
+            active_model = None
+            if qwen_32b:
+                active_model = "qwen2.5:32b"
+            elif qwen_14b:
+                active_model = "qwen2.5:14b"
+            elif qwen_7b:
+                active_model = "qwen2.5:7b"
+            
+            return {
+                "status": "healthy" if qwen_available else "degraded",
+                "ollama": {
+                    "connected": True,
+                    "host": ollama_host,
+                    "models_loaded": len(models),
+                    "responsive": True
+                },
+                "qwen": {
+                    "available": qwen_available,
+                    "active_model": active_model,
+                    "variants_installed": {
+                        "32b": qwen_32b,
+                        "14b": qwen_14b,
+                        "7b": qwen_7b
+                    }
+                },
+                "all_models": model_names,
+                "message": f"Qwen 2.5 ready ({active_model})" if qwen_available else "No Qwen model found - run: ollama pull qwen2.5:14b",
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            return {
+                "status": "unhealthy",
+                "ollama": {
+                    "connected": False,
+                    "error": f"HTTP {response.status_code}",
+                    "host": ollama_host
+                },
+                "message": "Ollama service returned error",
+                "timestamp": datetime.now().isoformat()
+            }
+            
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "ollama": {
+                "connected": False,
+                "error": str(e),
+                "host": os.getenv("OLLAMA_HOST", "http://localhost:11434")
+            },
+            "message": "Ollama service unreachable - ensure Ollama is running: ollama serve",
+            "timestamp": datetime.now().isoformat()
+        }
 
 
 # ============================================================================
@@ -471,18 +750,22 @@ async def health_check():
             "soil_analyzer": "loaded",
             "yield_predictor": "loaded",
             "irrigation_optimizer": "loaded",
-            "pest_assessor": "loaded"
+            "pest_assessor": "loaded",
+            "balaramaji_assistant": "loaded",  # ✅ NEW
+            "agro_intelligence": "loaded"
         }
 
         return {
             "status": "healthy",
             "models": models_status,
-            "message": "All systems operational"
+            "message": "All systems operational",
+            "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
         return {
             "status": "unhealthy",
-            "error": str(e)
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
         }
 
 
@@ -508,11 +791,20 @@ async def startup_event():
         get_irrigation_optimizer()
         get_pest_risk_assessor()
         
+        # Try to load Balaramaji (may use fallback if Ollama not available)
+        try:
+            get_balaramaji_assistant()
+            logger.info("✅ Balaramaji assistant verified")
+        except Exception as e:
+            logger.warning(f"⚠️  Balaramaji not available (will use fallback): {e}")
+        
+        # Try to load report generator
         try:
             get_report_generator()
         except:
             pass
         
+        # Try to load explainer
         try:
             get_explainer()
         except:

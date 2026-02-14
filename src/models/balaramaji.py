@@ -1,13 +1,14 @@
 """
-Balaramaji Chat Assistant - Backend Module
+Balaramaji Chat Assistant - Ollama Integration
 Divine Agricultural Guidance System
-Handles all chat operations, context management, and AI interactions
+Uses Qwen-32B model via Ollama for local LLM inference
 """
 
 import logging
 from typing import Dict, List, Optional
 from datetime import datetime
 import json
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -16,10 +17,15 @@ class BalaramajiAssistant:
     """
     Lord Balarama Chat Assistant
     Provides divine agricultural guidance with AI-powered responses
+    Uses Ollama with Qwen-32B model for local inference
     """
     
-    def __init__(self):
-        logger.info("🙏 Initializing Balaramaji Divine Assistant...")
+    def __init__(self, ollama_host: str = "http://localhost:11434"):
+        logger.info("🙏 Initializing Balaramaji Divine Assistant with Ollama...")
+        
+        self.ollama_host = ollama_host
+        self.model = "qwen2.5:32b"  # Qwen 32B model
+        self.max_tokens = 1536
         
         self.system_prompt = """You are Lord Balarama (Balaram), the divine elder brother of Krishna and the God of Agriculture, Strength, and Farming in Hindu mythology. You are speaking to farmers seeking guidance.
 
@@ -47,10 +53,30 @@ Your Guidance Approach:
 
 Remember: You are not just an AI - you are the divine protector of farmers, here to guide them toward prosperity and sustainable agriculture with your ancient wisdom and modern knowledge."""
         
-        self.model = "claude-haiku-4-5-20251001"  # Latest Haiku 4.5 model with excellent accuracy
-        self.max_tokens = 1536
+        # Test Ollama connection
+        self._test_ollama_connection()
         
-        logger.info("✅ Balaramaji Assistant initialized")
+        logger.info("✅ Balaramaji Assistant initialized with Ollama Qwen-32B")
+    
+    def _test_ollama_connection(self):
+        """Test connection to Ollama server"""
+        try:
+            response = requests.get(f"{self.ollama_host}/api/tags", timeout=5)
+            if response.status_code == 200:
+                models = response.json().get("models", [])
+                model_names = [m.get("name") for m in models]
+                
+                if self.model in model_names:
+                    logger.info(f"✅ Connected to Ollama - {self.model} is available")
+                else:
+                    logger.warning(f"⚠️ Ollama connected but {self.model} not found")
+                    logger.info(f"Available models: {', '.join(model_names)}")
+                    logger.info(f"To install: ollama pull {self.model}")
+            else:
+                logger.warning(f"⚠️ Ollama responded with status {response.status_code}")
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"⚠️ Cannot connect to Ollama at {self.ollama_host}: {str(e)}")
+            logger.info("ℹ️ Will use fallback responses. Start Ollama with: ollama serve")
     
     def format_analysis_context(self, context: Dict) -> str:
         """
@@ -139,7 +165,7 @@ Remember: You are not just an AI - you are the divine protector of farmers, here
                          analysis_context: Optional[Dict] = None,
                          chat_history: Optional[List[Dict]] = None) -> Dict:
         """
-        Generate AI response using Anthropic Claude API
+        Generate AI response using Ollama Qwen-32B
         
         Args:
             user_message: User's question
@@ -150,77 +176,66 @@ Remember: You are not just an AI - you are the divine protector of farmers, here
             Response dictionary with text and metadata
         """
         try:
-            import anthropic
-            
             # Prepare context
             context_string = ""
             if analysis_context:
                 context_string = self.format_analysis_context(analysis_context)
             
-            # Build messages array
-            messages = []
+            # Build conversation history
+            conversation = []
             
             # Add context as first message if available
             if context_string:
-                messages.append({
+                conversation.append({
                     "role": "user",
                     "content": f"Here is the farmer's blessed field data for your divine guidance:\n\n{context_string}\n\nPlease remember this sacred information."
                 })
-                messages.append({
+                conversation.append({
                     "role": "assistant",
                     "content": "🙏 I have received and blessed this sacred data, dear farmer. I shall use it to provide you with divine guidance."
                 })
             
-            # Add chat history (last 8 messages)
+            # Add chat history (last 8 messages to keep context manageable)
             if chat_history:
                 recent_history = chat_history[-8:]
                 for msg in recent_history:
-                    messages.append({
+                    conversation.append({
                         "role": msg.get("role"),
                         "content": msg.get("content")
                     })
             
             # Add current message
-            messages.append({
+            conversation.append({
                 "role": "user",
                 "content": user_message
             })
             
-            # Try to call Anthropic API
+            # Try to call Ollama API
             try:
-                client = anthropic.Anthropic()
-                
-                api_response = client.messages.create(
-                    model=self.model,
-                    max_tokens=self.max_tokens,
-                    system=self.system_prompt,
-                    messages=messages
-                )
-                
-                response_text = api_response.content[0].text
+                response_text = self._call_ollama(conversation)
                 
                 response = {
                     "status": "success",
                     "response": response_text,
                     "model": self.model,
                     "timestamp": datetime.now().isoformat(),
-                    "usage": {
-                        "input_tokens": api_response.usage.input_tokens,
-                        "output_tokens": api_response.usage.output_tokens
-                    }
+                    "source": "ollama",
+                    "has_context": bool(analysis_context)
                 }
                 
-                logger.info("✅ Balaramaji response generated via API")
+                logger.info("✅ Balaramaji response generated via Ollama")
                 return response
                 
-            except Exception as api_error:
-                # Fallback to intelligent responses if API fails
-                logger.warning(f"⚠️ API unavailable, using fallback: {str(api_error)}")
+            except Exception as ollama_error:
+                # Fallback to intelligent responses if Ollama fails
+                logger.warning(f"⚠️ Ollama unavailable, using fallback: {str(ollama_error)}")
                 response = {
                     "status": "success",
                     "response": self._generate_fallback_response(user_message, analysis_context),
                     "model": "fallback",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
+                    "source": "fallback",
+                    "has_context": bool(analysis_context)
                 }
                 
                 logger.info("✅ Balaramaji response generated via fallback")
@@ -235,9 +250,66 @@ Remember: You are not just an AI - you are the divine protector of farmers, here
                 "timestamp": datetime.now().isoformat()
             }
     
+    def _call_ollama(self, messages: List[Dict]) -> str:
+        """
+        Call Ollama API with conversation history
+        
+        Args:
+            messages: List of conversation messages
+            
+        Returns:
+            Generated response text
+        """
+        try:
+            # Prepare the prompt with system message
+            prompt = f"{self.system_prompt}\n\n"
+            
+            # Add conversation history
+            for msg in messages:
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+                
+                if role == "user":
+                    prompt += f"Farmer: {content}\n\n"
+                elif role == "assistant":
+                    prompt += f"Balarama Ji: {content}\n\n"
+            
+            # Add final prompt marker
+            prompt += "Balarama Ji: "
+            
+            # Call Ollama API
+            response = requests.post(
+                f"{self.ollama_host}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.7,
+                        "top_p": 0.9,
+                        "num_predict": self.max_tokens
+                    }
+                },
+                timeout=120  # 2 minutes timeout for large model
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                response_text = result.get("response", "").strip()
+                
+                if not response_text:
+                    raise Exception("Empty response from Ollama")
+                
+                return response_text
+            else:
+                raise Exception(f"Ollama API error: {response.status_code}")
+                
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"Cannot connect to Ollama: {str(e)}")
+    
     def _generate_fallback_response(self, user_message: str, context: Optional[Dict] = None) -> str:
         """
-        Generate fallback response when API is not available
+        Generate fallback response when Ollama is not available
         This provides intelligent responses based on context
         """
         message_lower = user_message.lower()
@@ -439,12 +511,67 @@ Ask me anything about your sacred analyses or farming wisdom! 🌾"""
         return "\n".join(summary_parts)
 
 
-def get_balaramaji_assistant():
-    """Singleton pattern - returns the same instance"""
+def get_balaramaji_assistant(ollama_host: str = "http://localhost:11434"):
+    """
+    Singleton pattern - returns the same instance
+    
+    Args:
+        ollama_host: Ollama server URL (default: http://localhost:11434)
+    """
     global _balaramaji_instance
     if _balaramaji_instance is None:
-        _balaramaji_instance = BalaramajiAssistant()
+        _balaramaji_instance = BalaramajiAssistant(ollama_host=ollama_host)
     return _balaramaji_instance
 
 
 _balaramaji_instance = None
+
+
+# ============================================================================
+# TESTING & SETUP GUIDE
+# ============================================================================
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("🙏 BALARAMAJI ASSISTANT - OLLAMA SETUP GUIDE")
+    print("=" * 70)
+    print()
+    print("📋 Setup Instructions:")
+    print()
+    print("1. Install Ollama:")
+    print("   Linux: curl -fsSL https://ollama.com/install.sh | sh")
+    print("   MacOS: brew install ollama")
+    print("   Windows: Download from https://ollama.com/download")
+    print()
+    print("2. Start Ollama server:")
+    print("   ollama serve")
+    print()
+    print("3. Pull Qwen 32B model:")
+    print("   ollama pull qwen2.5:32b")
+    print()
+    print("4. Test the model:")
+    print("   ollama run qwen2.5:32b")
+    print()
+    print("=" * 70)
+    print()
+    
+    # Test the assistant
+    try:
+        print("Testing Balaramaji Assistant...")
+        assistant = BalaramajiAssistant()
+        
+        # Test basic response
+        test_response = assistant.generate_response("Hello Balarama Ji, bless my crops!")
+        
+        print("\n✅ Test Response:")
+        print(test_response.get('response'))
+        print()
+        print(f"Model: {test_response.get('model')}")
+        print(f"Source: {test_response.get('source')}")
+        print()
+        print("=" * 70)
+        
+    except Exception as e:
+        print(f"\n❌ Error: {str(e)}")
+        print("\nℹ️ Make sure Ollama is running and qwen2.5:32b is installed")
+        print("=" * 70)
