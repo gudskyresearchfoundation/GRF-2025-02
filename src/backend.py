@@ -1,7 +1,6 @@
 """
 Backend API Routes
 FastAPI routes connecting all 6 models + Report Generation + XAI
-UPDATED: Models are pre-loaded in server.py, this just uses them
 """
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Body
