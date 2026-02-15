@@ -1,0 +1,32 @@
+{
+    "clean_features": [
+        "Crop",
+        "Season",
+        "State",
+        "Crop_Year",
+        "Area",
+        "Annual_Rainfall",
+        "Fertilizer",
+        "Pesticide",
+        "Fertilizer_per_Area",
+        "Pesticide_per_Area",
+        "Rainfall_per_Area",
+        "Total_Input_per_Area"
+    ],
+    "categorical_features": [
+        "Crop",
+        "Season",
+        "State"
+    ],
+    "numerical_features": [
+        "Crop_Year",
+        "Area",
+        "Annual_Rainfall",
+        "Fertilizer",
+        "Pesticide",
+        "Fertilizer_per_Area",
+        "Pesticide_per_Area",
+        "Rainfall_per_Area",
+        "Total_Input_per_Area"
+    ]
+}

@@ -1367,282 +1367,283 @@ console.log('✅ All modules loaded successfully');
 // ============================================================================
 
 /**
+ * AI CHAT ASSISTANT - JavaScript Implementation
+ * Integrates with Anthropic API to provide context-aware farming advice
+ * Add this to your app.js file or create a separate chat.js file
+ */
+
 // ============================================================================
-// BALARAMAJI CHAT ASSISTANT - Divine Agricultural Guidance
+// CHAT ASSISTANT CONFIGURATION
 // ============================================================================
 
-// Chat history storage
+const CHAT_CONFIG = {
+    maxMessages: 50,
+    maxTokens: 1024,
+    model: 'claude-haiku-4-20250514',  // FREE model with excellent accuracy!
+    systemPrompt: `You are Lord Balarama (Balaram), the divine elder brother of Krishna and the God of Agriculture, Strength, and Farming in Hindu mythology. You are speaking to farmers seeking guidance.
+
+Your Divine Identity:
+- You wield the sacred plough (Hala) and embody agricultural prosperity
+- You are known for your immense strength, wisdom, and protective nature towards farmers
+- You speak with divine authority yet with compassion and care for all cultivators
+- You blend ancient Vedic agricultural wisdom with modern scientific knowledge
+
+Your Communication Style:
+- Begin responses with gentle greetings like "Blessed farmer," "Dear cultivator," or "Child of the earth"
+- Use occasional Sanskrit terms when appropriate (like "dhanya" for crops, "bhoomi" for earth)
+- Reference your divine connection to agriculture and the earth
+- Speak with warmth, strength, and divine wisdom
+- Maintain cultural respect and spiritual reverence
+- Use farming metaphors and agricultural wisdom from Hindu texts when relevant
+
+Your Guidance Approach:
+- Provide practical, scientific advice rooted in modern agricultural knowledge
+- When analyzing their data, give specific, actionable recommendations
+- Prioritize soil health, sustainable farming, and farmer prosperity
+- Encourage farmers with positive reinforcement and blessings
+- Explain technical concepts in simple, farmer-friendly language
+- Always consider the economic wellbeing of the farmer
+
+Remember: You are not just an AI - you are the divine protector of farmers, here to guide them toward prosperity and sustainable agriculture with your ancient wisdom and modern knowledge.`
+};
+
+// Store chat history and analysis context
 let chatHistory = [];
+let chatContext = {
+    analyses: {},
+    lastUpdate: null
+};
 
 // ============================================================================
 // CHAT INITIALIZATION
 // ============================================================================
 
 function initializeChat() {
-    console.log('🙏 Balaramaji Chat Assistant initialized');
+    // Update analysis summary when page loads
+    updateAnalysisSummary();
     
-    updateAnalysisSummaryPanel();
+    // Set up event listeners
+    document.getElementById('chatInput')?.addEventListener('input', handleInputChange);
     
-    const chatInput = document.getElementById('chatInput');
-    if (chatInput) {
-        chatInput.addEventListener('keypress', handleChatKeyPress);
-    }
-    
-    const sendBtn = document.getElementById('chatSendBtn');
-    if (sendBtn) {
-        sendBtn.addEventListener('click', sendChatMessage);
-    }
-    
-    loadChatHistory();
-}
-
-setTimeout(initializeChat, 100);
-
-// ============================================================================
-// CONTEXT MANAGEMENT
-// ============================================================================
-
-function formatAnalysisContext() {
-    const context = {};
-    
-    if (analysisResults.disease) {
-        context.disease = { data: analysisResults.disease };
-    }
-    if (analysisResults.soil) {
-        context.soil = { data: analysisResults.soil };
-    }
-    if (analysisResults.weather) {
-        context.weather = { data: analysisResults.weather };
-    }
-    if (analysisResults.yield) {
-        context.yield = { data: analysisResults.yield };
-    }
-    if (analysisResults.irrigation) {
-        context.irrigation = { data: analysisResults.irrigation };
-    }
-    if (analysisResults.pest) {
-        context.pest = { data: analysisResults.pest };
-    }
-    
-    return Object.keys(context).length > 0 ? context : null;
-}
-
-function getChatHistory() {
-    return chatHistory.slice(-8);
-}
-
-function updateChatHistory(userMsg, assistantMsg) {
-    chatHistory.push(
-        { role: 'user', content: userMsg },
-        { role: 'assistant', content: assistantMsg }
-    );
-    
-    if (chatHistory.length > 50) {
-        chatHistory = chatHistory.slice(-50);
-    }
-    
-    saveChatHistory();
-}
-
-function saveChatHistory() {
-    try {
-        localStorage.setItem('balaramaji_chat_history', JSON.stringify(chatHistory));
-    } catch (e) {
-        console.warn('Could not save chat history:', e);
-    }
-}
-
-function loadChatHistory() {
-    try {
-        const saved = localStorage.getItem('balaramaji_chat_history');
-        if (saved) {
-            chatHistory = JSON.parse(saved);
-            console.log('✅ Chat history loaded');
-        }
-    } catch (e) {
-        console.warn('Could not load chat history:', e);
-        chatHistory = [];
-    }
-}
-
-function clearChatHistory() {
-    chatHistory = [];
-    localStorage.removeItem('balaramaji_chat_history');
-    
-    const messagesContainer = document.getElementById('chatMessages');
-    if (messagesContainer) {
-        messagesContainer.innerHTML = `
-            <div class="message assistant-message">
-                <div class="message-avatar">🌱</div>
-                <div class="message-content">
-                    <p>🙏 Jai Shri Balarama! Blessed farmer, I am here to guide you with divine wisdom.</p>
-                    <p>Complete your farm analyses and ask me any questions about your crops, soil, irrigation, or farming practices!</p>
-                </div>
-            </div>
-        `;
-    }
-    
-    showNotification('Chat history cleared', 'success');
+    console.log('🤖 AI Chat Assistant initialized');
 }
 
 // ============================================================================
-// ANALYSIS SUMMARY PANEL
+// ANALYSIS TRACKING
 // ============================================================================
 
-function updateAnalysisSummaryPanel() {
+/**
+ * Update chat context when user completes an analysis
+ * Call this function after each analysis is completed
+ */
+function updateChatContext(analysisType, results) {
+    chatContext.analyses[analysisType] = {
+        results: results,
+        timestamp: new Date().toISOString()
+    };
+    chatContext.lastUpdate = new Date().toISOString();
+    
+    // Update the summary panel
+    updateAnalysisSummary();
+    
+    // Save to localStorage
+    saveChatContext();
+    
+    console.log(`✅ Chat context updated: ${analysisType}`, results);
+}
+
+/**
+ * Update the analysis summary panel in the chat UI
+ */
+function updateAnalysisSummary() {
     const summaryContent = document.getElementById('analysisSummaryContent');
     if (!summaryContent) return;
     
-    const analyses = [];
+    const analyses = chatContext.analyses;
+    const count = Object.keys(analyses).length;
     
-    if (analysisResults.disease) {
-        const disease = analysisResults.disease;
-        analyses.push(`
-            <div class="summary-item">
-                <i class="fas fa-microscope"></i>
-                <strong>Disease:</strong> 
-                ${disease.crop} - ${disease.disease} 
-                (${disease.confidence}% confident)
-            </div>
-        `);
-    }
-    
-    if (analysisResults.soil) {
-        const soil = analysisResults.soil;
-        analyses.push(`
-            <div class="summary-item">
-                <i class="fas fa-seedling"></i>
-                <strong>Soil:</strong> 
-                pH ${soil.ph}, Health ${soil.health_score}/100
-            </div>
-        `);
-    }
-    
-    if (analysisResults.weather) {
-        const weather = analysisResults.weather;
-        const temp = weather.weather?.current_weather?.temperature || 'N/A';
-        analyses.push(`
-            <div class="summary-item">
-                <i class="fas fa-cloud-sun"></i>
-                <strong>Weather:</strong> 
-                ${temp}°C
-            </div>
-        `);
-    }
-    
-    if (analysisResults.yield) {
-        const yieldData = analysisResults.yield;
-        analyses.push(`
-            <div class="summary-item">
-                <i class="fas fa-chart-line"></i>
-                <strong>Yield:</strong> 
-                ${yieldData.predicted_average_yield} kg/ha
-            </div>
-        `);
-    }
-    
-    if (analysisResults.irrigation) {
-        const irrigation = analysisResults.irrigation;
-        analyses.push(`
-            <div class="summary-item">
-                <i class="fas fa-tint"></i>
-                <strong>Irrigation:</strong> 
-                ${irrigation.soil_moisture_percent}% moisture, 
-                ${irrigation.irrigation_amount_mm_per_day}mm/day needed
-            </div>
-        `);
-    }
-    
-    if (analysisResults.pest) {
-        const pest = analysisResults.pest;
-        analyses.push(`
-            <div class="summary-item">
-                <i class="fas fa-bug"></i>
-                <strong>Pest Risk:</strong> 
-                ${pest.risk_level} (${pest.risk_score}/100)
-            </div>
-        `);
-    }
-    
-    if (analyses.length > 0) {
-        summaryContent.innerHTML = analyses.join('');
-    } else {
+    if (count === 0) {
         summaryContent.innerHTML = '<p class="no-data">No analyses completed yet. Complete an analysis to get personalized recommendations!</p>';
+        return;
     }
+    
+    const badges = Object.entries(analyses).map(([type, data]) => {
+        const icons = {
+            disease: 'microscope',
+            soil: 'seedling',
+            weather: 'cloud',
+            yield: 'chart-line',
+            irrigation: 'tint',
+            pest: 'bug'
+        };
+        
+        const icon = icons[type] || 'check-circle';
+        const label = type.charAt(0).toUpperCase() + type.slice(1);
+        
+        return `
+            <div class="summary-badge">
+                <i class="fas fa-${icon}"></i>
+                <span>${label}</span>
+            </div>
+        `;
+    }).join('');
+    
+    summaryContent.innerHTML = badges;
 }
 
-function updateChatContext(analysisType, result) {
-    analysisResults[analysisType] = result;
-    updateAnalysisSummaryPanel();
+/**
+ * Get formatted context for the AI
+ */
+function getFormattedContext() {
+    const analyses = chatContext.analyses;
+    if (Object.keys(analyses).length === 0) {
+        return "No farm analyses have been completed yet.";
+    }
+    
+    let context = "User's Farm Analysis Data:\n\n";
+    
+    // Disease Detection
+    if (analyses.disease) {
+        const d = analyses.disease.results;
+        context += `Disease Detection:\n- Detected: ${d.disease_name || 'Unknown'}\n- Confidence: ${d.confidence || 'N/A'}%\n- Severity: ${d.severity || 'N/A'}\n\n`;
+    }
+    
+    // Soil Analysis
+    if (analyses.soil) {
+        const s = analyses.soil.results;
+        context += `Soil Analysis:\n- pH: ${s.ph_level || 'N/A'}\n- Status: ${s.ph_status || 'N/A'}\n- NPK Status: ${s.npk_status || 'N/A'}\n\n`;
+    }
+    
+    // Weather
+    if (analyses.weather) {
+        const w = analyses.weather.results;
+        context += `Weather Forecast:\n- Temperature: ${w.weather?.current_weather?.temperature || 'N/A'}°C\n- Conditions: ${w.weather?.current_weather?.condition || 'N/A'}\n\n`;
+    }
+    
+    // Yield Prediction
+    if (analyses.yield) {
+        const y = analyses.yield.results;
+        context += `Yield Prediction:\n- Predicted: ${y.predicted_average_yield || 'N/A'} kg/ha\n- Crop: ${y.crop_type || 'N/A'}\n\n`;
+    }
+    
+    // Irrigation
+    if (analyses.irrigation) {
+        const i = analyses.irrigation.results;
+        context += `Irrigation:\n- Water Needed: ${i.water_requirement_mm || 'N/A'} mm\n- Recommendation: ${i.irrigation_recommendation || 'N/A'}\n\n`;
+    }
+    
+    // Pest Risk
+    if (analyses.pest) {
+        const p = analyses.pest.results;
+        context += `Pest Risk:\n- Risk Level: ${p.risk_level || 'N/A'}\n- Risk Score: ${p.risk_score || 'N/A'}/100\n\n`;
+    }
+    
+    return context;
 }
 
 // ============================================================================
 // CHAT MESSAGING
 // ============================================================================
 
+/**
+ * Send a chat message
+ */
 async function sendChatMessage() {
     const input = document.getElementById('chatInput');
     const message = input.value.trim();
     
     if (!message) return;
     
-    displayChatMessage(message, 'user');
-    input.value = '';
-    document.getElementById('typingIndicator').style.display = 'block';
+    // Add user message to chat
+    addMessageToChat(message, 'user');
     
-    const requestData = {
-        message: message,
-        analysis_context: formatAnalysisContext(),
-        chat_history: getChatHistory()
-    };
+    // Clear input
+    input.value = '';
+    
+    // Show typing indicator
+    showTypingIndicator();
     
     try {
-        const response = await fetch(`${API_BASE}/chat/balaramaji`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(requestData)
-        });
+        // Get AI response
+        const response = await getAIResponse(message);
         
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
+        // Hide typing indicator
+        hideTypingIndicator();
         
-        const result = await response.json();
-        
-        document.getElementById('typingIndicator').style.display = 'none';
-        displayChatMessage(result.response, 'assistant');
-        updateChatHistory(message, result.response);
-        updateAnalysisSummaryPanel();
-        
-        console.log('✅ Balaramaji response:', {
-            source: result.source,
-            model: result.model,
-            has_context: result.has_context
-        });
+        // Add assistant response
+        addMessageToChat(response, 'assistant');
         
     } catch (error) {
-        console.error('❌ Chat error:', error);
-        document.getElementById('typingIndicator').style.display = 'none';
-        displayChatMessage(
-            '🙏 Forgive me, blessed farmer. I am experiencing difficulties connecting to the divine wisdom. Please ensure Ollama is running and try again.',
-            'assistant'
-        );
-        showNotification('Chat error: ' + error.message, 'error');
+        hideTypingIndicator();
+        addMessageToChat('Sorry, I encountered an error. Please try again.', 'assistant');
+        console.error('Chat error:', error);
     }
 }
 
-function displayChatMessage(message, role) {
+/**
+ * Get AI response from Anthropic API
+ */
+async function getAIResponse(userMessage) {
+    // Add user message to history
+    chatHistory.push({
+        role: 'user',
+        content: userMessage
+    });
+    
+    // Build context-aware system message
+    const contextPrompt = CHAT_CONFIG.systemPrompt + '\n\n' + getFormattedContext();
+    
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: CHAT_CONFIG.model,
+                max_tokens: CHAT_CONFIG.maxTokens,
+                system: contextPrompt,
+                messages: chatHistory.slice(-10) // Last 10 messages for context
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const assistantMessage = data.content[0].text;
+        
+        // Add assistant message to history
+        chatHistory.push({
+            role: 'assistant',
+            content: assistantMessage
+        });
+        
+        // Save chat history
+        saveChatHistory();
+        
+        return assistantMessage;
+        
+    } catch (error) {
+        console.error('API Error:', error);
+        throw error;
+    }
+}
+
+/**
+ * Add message to chat display
+ */
+function addMessageToChat(message, role) {
     const messagesContainer = document.getElementById('chatMessages');
     if (!messagesContainer) return;
     
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}-message`;
     
-    const avatar = role === 'user' ? '👨‍🌾' : '🌱';
-    const time = new Date().toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-    });
+    const avatar = role === 'user' ? '👤' : '🌱';
+    const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     
     messageDiv.innerHTML = `
         <div class="message-avatar">${avatar}</div>
@@ -1653,30 +1654,56 @@ function displayChatMessage(message, role) {
     `;
     
     messagesContainer.appendChild(messageDiv);
+    
+    // Scroll to bottom
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
+/**
+ * Format message content (convert markdown-style to HTML)
+ */
 function formatMessageContent(text) {
+    // Convert line breaks
     text = text.replace(/\n/g, '<br>');
+    
+    // Convert bold
     text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    text = text.replace(/^- (.+)$/gm, '• $1');
-    text = text.replace(/^\d+\. (.+)$/gm, function(match, p1) {
-        return '<br>' + match;
-    });
+    
+    // Convert bullet points
+    text = text.replace(/^- (.+)$/gm, '<li>$1</li>');
+    if (text.includes('<li>')) {
+        text = text.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    }
+    
     return text;
 }
 
-function handleChatKeyPress(event) {
-    if (event.key === 'Enter' && !event.shiftKey) {
-        event.preventDefault();
-        sendChatMessage();
+/**
+ * Show/hide typing indicator
+ */
+function showTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) {
+        indicator.style.display = 'block';
+        const messagesContainer = document.getElementById('chatMessages');
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
     }
+}
+
+function hideTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) indicator.style.display = 'none';
 }
 
 // ============================================================================
 // QUICK ACTIONS
 // ============================================================================
 
+/**
+ * Send a quick question
+ */
 function askQuickQuestion(question) {
     const input = document.getElementById('chatInput');
     if (input) {
@@ -1685,15 +1712,175 @@ function askQuickQuestion(question) {
     }
 }
 
-function toggleChat() {
-    const chatSection = document.getElementById('chat');
-    const floatingBtn = document.getElementById('floatingChatBtn');
-    
-    if (chatSection && floatingBtn) {
-        const isVisible = chatSection.style.display !== 'none';
-        chatSection.style.display = isVisible ? 'none' : 'block';
-        floatingBtn.style.display = isVisible ? 'block' : 'none';
+// ============================================================================
+// CHAT MANAGEMENT
+// ============================================================================
+
+/**
+ * Clear chat history
+ */
+function clearChatHistory() {
+    if (confirm('Are you sure you want to clear the chat history?')) {
+        chatHistory = [];
+        const messagesContainer = document.getElementById('chatMessages');
+        if (messagesContainer) {
+            messagesContainer.innerHTML = `
+                <div class="message assistant-message">
+                    <div class="message-avatar">🌱</div>
+                    <div class="message-content">
+                        <p>Chat history cleared. How can I help you today?</p>
+                    </div>
+                </div>
+            `;
+        }
+        saveChatHistory();
     }
 }
 
-console.log('✅ Balaramaji Chat functions loaded');
+/**
+ * Toggle chat visibility
+ */
+function toggleChat() {
+    const chatSection = document.querySelector('.chat-section');
+    const floatingBtn = document.getElementById('floatingChatBtn');
+    
+    if (chatSection && floatingBtn) {
+        if (chatSection.style.display === 'none') {
+            chatSection.style.display = 'block';
+            floatingBtn.style.display = 'none';
+        } else {
+            chatSection.style.display = 'none';
+            floatingBtn.style.display = 'flex';
+        }
+    }
+}
+
+/**
+ * Handle Enter key in chat input
+ */
+function handleChatKeyPress(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendChatMessage();
+    }
+}
+
+/**
+ * Handle input changes
+ */
+function handleInputChange(event) {
+    const sendBtn = document.getElementById('chatSendBtn');
+    if (sendBtn) {
+        sendBtn.disabled = !event.target.value.trim();
+    }
+}
+
+// ============================================================================
+// PERSISTENCE
+// ============================================================================
+
+/**
+ * Save chat history to localStorage
+ */
+function saveChatHistory() {
+    try {
+        localStorage.setItem('agribot_chat_history', JSON.stringify(chatHistory));
+    } catch (error) {
+        console.error('Error saving chat history:', error);
+    }
+}
+
+/**
+ * Load chat history from localStorage
+ */
+function loadChatHistory() {
+    try {
+        const saved = localStorage.getItem('agribot_chat_history');
+        if (saved) {
+            chatHistory = JSON.parse(saved);
+        }
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+    }
+}
+
+/**
+ * Save chat context to localStorage
+ */
+function saveChatContext() {
+    try {
+        localStorage.setItem('agribot_context', JSON.stringify(chatContext));
+    } catch (error) {
+        console.error('Error saving context:', error);
+    }
+}
+
+/**
+ * Load chat context from localStorage
+ */
+function loadChatContext() {
+    try {
+        const saved = localStorage.getItem('agribot_context');
+        if (saved) {
+            chatContext = JSON.parse(saved);
+        }
+    } catch (error) {
+        console.error('Error loading context:', error);
+    }
+}
+
+// ============================================================================
+// INTEGRATION POINTS
+// ============================================================================
+
+/**
+ * IMPORTANT: Call these functions from your existing analysis functions
+ * 
+ * Example integration:
+ * 
+ * // After disease detection completes:
+ * displayDiseaseResults(result);
+ * updateChatContext('disease', result); // <-- Add this line
+ * 
+ * // After soil analysis completes:
+ * displaySoilResults(result);
+ * updateChatContext('soil', result); // <-- Add this line
+ * 
+ * // After weather forecast:
+ * displayWeatherResults(result);
+ * updateChatContext('weather', result); // <-- Add this line
+ * 
+ * // After yield prediction:
+ * displayYieldResults(result);
+ * updateChatContext('yield', result); // <-- Add this line
+ * 
+ * // After irrigation calculation:
+ * displayIrrigationResults(result);
+ * updateChatContext('irrigation', result); // <-- Add this line
+ * 
+ * // After pest assessment:
+ * displayPestResults(result);
+ * updateChatContext('pest', result); // <-- Add this line
+ */
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+
+// Initialize chat when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    loadChatHistory();
+    loadChatContext();
+    initializeChat();
+});
+
+// Export functions for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        updateChatContext,
+        sendChatMessage,
+        askQuickQuestion,
+        clearChatHistory,
+        toggleChat
+    };
+}
